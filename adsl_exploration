@@ -1,0 +1,44 @@
+# teal app
+
+#packages
+library(tidyverse)
+library(random.cdisc.data)
+library(teal.data)
+library(teal.modules.general)
+library(sparkline)
+
+#data
+
+ADSL <- random.cdisc.data::cadsl
+
+data.teal <- teal.data::cdisc_data(cdisc_dataset("ADSL", ADSL),
+                                   
+                                   code = "ADSL <- radsl(cached = TRUE)")
+# specs for app
+tm.data.table.1 <- tm_data_table("Data Table")
+
+tm.variable.broswer.1 <- tm_variable_browser("Variable Browser")
+
+# init for app itself
+app <- teal::init(
+  
+  data = data.teal,
+  
+  modules = teal::modules(
+    # tm_front_page(),
+    tm.data.table.1,
+    tm.variable.broswer.1
+    
+  ),
+  
+  header = "Simple teal app",
+  
+  footer = tags$p(class="text-muted", "Source: agile-R website")
+)
+
+
+# call the UI and Server for the app 
+
+shinyApp(app$ui,
+         
+         app$server)
