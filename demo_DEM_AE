@@ -1,0 +1,137 @@
+# teal app, synthetic data demo
+
+# load required packages
+
+library(tidyverse)
+library(random.cdisc.data)
+library(teal.data)
+library(teal.modules.general)
+library(sparkline)
+library(teal.modules.clinical)
+
+
+# load *synthetic* data: random.cdisc.data is realistic but safe to share
+
+ADSL <- random.cdisc.data::cadsl
+
+ADAE <- random.cdisc.data::cadae
+
+
+# define arm vars 
+
+cs_arm_var <- choices_selected(
+  
+  choices = variable_choices("ADSL"), # CDISC standard, can add your own
+  
+  selected = "TRT01A"
+  
+)
+
+
+# initiate the app, add modules from above
+
+app <- teal::init(
+
+  # loading data
+  
+  data = cdisc_data(
+    
+    cdisc_dataset("ADSL", ADSL),
+    
+    cdisc_dataset("ADAE", ADAE)
+  
+    ),
+  
+  # adding modules
+  
+  modules = modules(
+    
+    # study info
+    
+    tm_front_page(),
+    
+    # data overviews
+    
+    tm_data_table("Data Table"),
+    
+    tm_variable_browser("Variable Browser"),
+    
+    # t_DM output
+    
+    tm_t_summary(
+      
+      label = "Demographic Table",
+      
+      dataname = "ADSL",
+      
+      arm_var = choices_selected(c("ACTARMCD", "ARMCD"), "ACTARMCD"),
+      
+      summarize_vars = choices_selected(c("BMRKR2", "SEX", "AGE", "RACE"),
+                                        
+                                        c("BMRKR2", "SEX", "AGE"))
+      ),
+  
+  # group AE outputs in new module
+    
+  modules(
+
+    label = "Adverse Events",
+    
+    # AE summary output
+    
+    tm_t_events_summary(
+      label = "AE Summary",
+      dataname = "ADAE",
+      arm_var = cs_arm_var,
+      
+      flag_var_aesi = NULL,
+      add_total = TRUE,
+      count_pt = FALSE,
+      count_events = FALSE
+    ),
+
+    # AE by grade output 
+    
+    tm_t_events_by_grade(
+      label = "AE Table by Grade",
+      dataname = "ADAE",
+      arm_var = cs_arm_var,
+
+      llt = choices_selected(
+        choices = variable_choices("ADAE"),
+        selected = "AETERM"
+      ),
+      
+      hlt = choices_selected(
+        choices = variable_choices("ADAE"),
+        selected = "AESOC"
+      ),
+      
+      grade = choices_selected(
+        choices = variable_choices("ADAE"),
+        selected = "AETOXGR"
+      ),
+      
+      add_total = TRUE
+    )
+
+  ) # closing AE module
+  
+),# closing overall modules()  
+  
+  # title for whole app
+
+  header = "Demo Teal App (Synthetic CDISC Data)",
+  
+  # footer for whole app
+
+  footer = tags$p(class="text-muted", "Source: https://stefanthoma.github.io/teal_intro/")
+  
+) # close app init
+
+
+# call UI and Server separately, from the single app object
+
+shinyApp(app$ui,
+         
+         app$server)
